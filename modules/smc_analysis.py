@@ -4,7 +4,7 @@ import numpy as np
 import yfinance as yf
 
 def fetch_gold_data(interval_str):
-    """ទាញយកទិន្នន័យ Candle មាសពិតប្រាកដពីទីផ្សារ"""
+    
     try:
         tf_map = {
             "5M": "5m",
@@ -26,7 +26,7 @@ def fetch_gold_data(interval_str):
         return None
 
 def calculate_smc(df):
-    """ចាប់តម្លៃ High និង Low ពី Chart មកគណនា BO Top/Bottom ដោយស្វ័យប្រវត្តិ"""
+    
     if df is None or len(df) < 10:
         return None
 
@@ -35,7 +35,7 @@ def calculate_smc(df):
     lows = recent_df['Low'].values
     closes = recent_df['Close'].values
 
-    # ចាប់តម្លៃខ្ពស់បំផុតនិងទាបបំផុតពិតប្រាកដពីទិន្នន័យ Chart
+  
     bo_top_max = float(np.max(highs))
     bo_top_min = float(bo_top_max - 6.0)
     
@@ -48,7 +48,7 @@ def calculate_smc(df):
     curr_low = float(lows[-1])
     curr_high = float(highs[-1])
 
-    # ពិនិត្យ Candle Sweep
+   
     candle_sweep = (curr_low < prev_low and current_price > prev_low) or \
                    (curr_high > prev_high and current_price < prev_high)
 
