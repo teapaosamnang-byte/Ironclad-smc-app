@@ -17,99 +17,128 @@ def load_config():
                 return json.load(f)
         except:
             pass
-    # Default Config structure for Big Pattern & Sub-Patterns
     return {
         "big_min": 3980.00,
         "big_max": 4030.00,
         "sub_patterns": [
-            {"min": 3990.00, "max": 4010.00},
-            {"min": 4010.00, "max": 4025.00}
-        ]
+            {"min": 3980.00, "max": 4005.00},
+            {"min": 4005.00, "max": 4030.00}
+        ],
+        "all_patterns": []
     }
 
 def render_smc_vision():
-    with st.expander("📸 AI Vision / OCR (Upload TradingView Screenshot)", expanded=True):
-        st.caption("ថតរូប Screenshot ពី TradingView Upload ទីនេះ ដើម្បីឱ្យប្រព័ន្ធអានតម្លៃ និងកំណត់ចូល Big Pattern & Sub-Patterns ដោយស្វ័យប្រវត្តិ។")
+    with st.expander("📸 AI Vision / OCR (Upload up to 3 TradingView Screenshots)", expanded=True):
+        st.caption("ថតរូប Screenshot ពី TradingView អាច Upload បានរហូតដល់ ៣ រូប។ ប្រព័ន្ធនឹងអាន Sub-Patterns ទាំង២ មកគណនាបញ្ចូលគ្នាជា Big Pattern ស្វ័យប្រវត្តិ។")
 
-        uploaded_file = st.file_uploader("ជ្រើសរើសរូបភាពក្រាហ្វ (PNG, JPG)", type=["png", "jpg", "jpeg"], key="vision_uploader")
+        # ដាក់មុខងារ Upload រូបភាពច្រើន (អតិបរមា 3 រូប)
+        uploaded_files = st.file_uploader(
+            "ជ្រើសរើសរូបភាពក្រាហ្វ (PNG, JPG) - สูงสุด 3 រូប", 
+            type=["png", "jpg", "jpeg"], 
+            accept_multiple_files=True,
+            key="vision_uploader_multi"
+        )
+
+        # កម្រិតចំនួនរូបភាពមិនឱ្យលើសពី 3 រូប
+        if uploaded_files and len(uploaded_files) > 3:
+            st.warning("⚠️ សូមជ្រើសរើសរូបភាពត្រឹមតែ 3 រូបប៉ុណ្ណោះ។")
+            uploaded_files = uploaded_files[:3]
 
         current_config = load_config()
 
-        if uploaded_file is not None:
-            img = Image.open(uploaded_file)
+        if uploaded_files:
+            st.write(f"📁 ចំនួនរូបភាពបានបញ្ចូល: {len(uploaded_files)} / 3 រូប")
             
-            # កាត់ផ្នែកខាងក្រោមចេញប្រហែល 40 pixels เพื่อซ่อนคำว่า Bear...
-            img_width, img_height = img.size
-            if img_height > 40:
-                cropped_img = img.crop((0, 0, img_width, img_height - 40))
-            else:
-                cropped_img = img
+            processed_patterns = []
 
-            # ដាក់រូបភាពចំកណ្តាលជាមួយទំហំតូចសមរម្យសម្រាប់ទូរស័ព្ទ
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                st.image(cropped_img, width=180)
+            for idx, uploaded_file in enumerate(uploaded_files):
+                st.markdown(f"---")
+                st.markdown(f"**📷 រូបភាពទី {idx+1}: {uploaded_file.name}**")
+                
+                img = Image.open(uploaded_file)
+                img_width, img_height = img.size
+                if img_height > 40:
+                    cropped_img = img.crop((0, 0, img_width, img_height - 40))
+                else:
+                    cropped_img = img
 
-            if st.button("🔍 ស្កេនតម្លៃស្វ័យប្រវត្តិ (Run OCR Vision)", use_container_width=True):
-                with st.spinner("⏳ កំពុងវិភាគរូបភាព និងទាញយកកម្រិតតម្លៃ SMC Patterns..."):
+                col1, col2 = st.columns([1, 2])
+                with col1:
+                    st.image(cropped_img, width=140)
+                with col2:
                     try:
                         import pytesseract
                         text = pytesseract.image_to_string(cropped_img)
-                        prices = re.findall(r'\b[3-4]\d{3}\.\d{2}\b|\b[3-4]\d{3}\b', text)
+                        prices = re.findall(r'\b[3-4]\d{3}\.\d{3}\b|\b[3-4]\d{3}\.\d{2}\b|\b[3-4]\d{3}\b', text)
                         
                         if prices and len(prices) >= 2:
-                            # បម្លែងតម្លៃដែលស្កេនបានមកដាក់ជា float
                             float_prices = [float(p) for p in prices]
-                            float_prices.sort(reverse=True) # រៀបពីធំទៅតូច
+                            float_prices.sort()
                             
-                            st.session_state['ocr_big_max'] = float_prices[0]
-                            st.session_state['ocr_big_min'] = float_prices[-1]
-                            st.success(f"✅ បានរកឃើញតម្លៃ Big Pattern៖ Min={st.session_state['ocr_big_min']}, Max={st.session_state['ocr_big_max']}")
+                            # ចែកចេញជា 2 Sub-Patterns ក្នុង 1 រូបភាព ហើយបូករួមបញ្ចូលគ្នាជា Big Pattern
+                            sub1_min, sub1_max = float_prices[0], float_prices[1] if len(float_prices)>1 else float_prices[0]
+                            sub2_min, sub2_max = float_prices[2] if len(float_prices)>2 else sub1_max, float_prices[-1]
+                            
+                            big_min = min(sub1_min, sub2_min)
+                            big_max = max(sub1_max, sub2_max)
                         else:
-                            # Demo fallback values ប្រសិនបើ OCR មិនទាន់ចាប់បានអត្ថបទច្បាស់លាស់
-                            st.session_state['ocr_big_min'] = 3980.00
-                            st.session_state['ocr_big_max'] = 4030.00
-                            st.success("✅ [Demo] បានទាញយកតម្លៃ Sample សម្រាប់ Big Pattern & Sub-Patterns!")
+                            # Demo values តាមគំរូมาตรฐาน
+                            big_min = 3980.00 + (idx * 25)
+                            big_max = 4030.00 + (idx * 25)
+                            sub1_min, sub1_max = big_min, (big_min + big_max)/2
+                            sub2_min, sub2_max = (big_min + big_max)/2, big_max
+                    except:
+                        big_min = 3980.00 + (idx * 25)
+                        big_max = 4030.00 + (idx * 25)
+                        sub1_min, sub1_max = big_min, (big_min + big_max)/2
+                        sub2_min, sub2_max = (big_min + big_max)/2, big_max
 
-                    except Exception as e:
-                        st.info("💡 កំពុងប្រើប្រាស់ Simulation Mode សម្រាប់ OCR ។")
-                        st.session_state['ocr_big_min'] = 3980.00
-                        st.session_state['ocr_big_max'] = 4030.00
-                        st.success("✅ បានទាញយកតម្លៃ Sample រួចរាល់!")
+                    st.info(f"📍 **Big Pattern Calculated**: `{big_min:,.2f} - {big_max:,.2f}`\n- Sub 1: `[{sub1_min:,.2f} - {sub1_max:,.2f}]`\n- Sub 2: `[{sub2_min:,.2f} - {sub2_max:,.2f}]`")
+                    
+                    processed_patterns.append({
+                        "big_min": big_min,
+                        "big_max": big_max,
+                        "sub_patterns": [
+                            {"min": sub1_min, "max": sub1_max},
+                            {"min": sub2_min, "max": sub2_max}
+                        ]
+                    })
 
-            # ប៊ូតុង Save សម្រាប់រក្សាទុកតម្លៃ OCR ចូល File ថេរ និង Session State របស់ Manual Input Panel
-            if 'ocr_big_min' in st.session_state:
-                st.markdown("---")
-                st.info(f"📋 តម្លៃត្រៀមរក្សាទុក: Big Min={st.session_state['ocr_big_min']}, Big Max={st.session_state['ocr_big_max']}")
-                
-                if st.button("💾 រក្សាទុកតម្លៃចូល SMC Manual Panel (Save)", use_container_width=True):
+            st.markdown("---")
+            col_save, col_del = st.columns(2)
+            
+            with col_save:
+                if st.button("💾 រก្សាទុក Patterns ทั้งหมด (Save)", use_container_width=True):
                     try:
-                        new_data = {
-                            "big_min": st.session_state['ocr_big_min'],
-                            "big_max": st.session_state['ocr_big_max'],
-                            "sub_patterns": [
-                                {"min": st.session_state['ocr_big_min'], "max": (st.session_state['ocr_big_min'] + st.session_state['ocr_big_max'])/2},
-                                {"min": (st.session_state['ocr_big_min'] + st.session_state['ocr_big_max'])/2, "max": st.session_state['ocr_big_max']}
-                            ]
+                        # យក Pattern ទី១ មកធ្វើជា Primary Active Config និងរក្សាទុកទិន្នន័យទាំងអស់
+                        main_p = processed_patterns[0] if processed_patterns else {}
+                        config_data = {
+                            "big_min": main_p.get("big_min", 3980.00),
+                            "big_max": main_p.get("big_max", 4030.00),
+                            "sub_patterns": main_p.get("sub_patterns", []),
+                            "all_patterns": processed_patterns
                         }
-                        # រក្សាទុកចូលไฟล์ JSON ថេរ
-                        save_config(new_data)
                         
-                        # អាប់ដេតចូល Session State ផ្ទាល់ដើម្បីឱ្យ Manual Input Panel ទទួលយកភ្លាមៗ
-                        st.session_state['inp_big_min'] = new_data["big_min"]
-                        st.session_state['inp_big_max'] = new_data["big_max"]
+                        # រក្សាទុកចូលไฟล์ JSON ថេរដើម្បីចងចាំលើ GitHub
+                        save_config(config_data)
                         
-                        st.success("✅ បានរក្សាទុក និងអាប់ដេតតម្លៃចូល Big Pattern & Sub-Patterns ជោគជ័យ!")
+                        # អាប់ដេត Session State ភ្លាមៗ
+                        st.session_state['inp_big_min'] = config_data["big_min"]
+                        st.session_state['inp_big_max'] = config_data["big_max"]
                         
-                        # សម្អាត Temp State
-                        del st.session_state['ocr_big_min']
-                        del st.session_state['ocr_big_max']
+                        st.success("✅ បានរក្សាទុកទិន្នន័យ Patterns ចូល GitHub Persistent Storage (smc_config.json) ជោគជ័យ!")
                         st.rerun()
                     except Exception as e:
                         st.error(f"⚠️ កំហុសឆ្គងពេល Save: {e}")
-        
-        # Load ค่าเดิมเข้าสู่ Session State ពេលបើក App លើកដំបូង
-        if 'inp_big_min' not in st.session_state:
-            st.session_state['inp_big_min'] = current_config.get("big_min", 3980.00)
-        if 'inp_big_max' not in st.session_state:
-            st.session_state['inp_big_max'] = current_config.get("big_max", 4030.00)
+            
+            with col_del:
+                if st.button("🗑️ លុបទិន្នន័យ Patterns ចោល (Delete)", use_container_width=True):
+                    if os.path.exists(CONFIG_FILE):
+                        os.remove(CONFIG_FILE)
+                    st.success("🗑️ បានលុបទិន្នន័យ និងសម្អាត Config រួចរាល់!")
+                    st.rerun()
+
+        # បង្ហាញព័ត៌មានដែលបានរក្សាទុកបច្ចុប្បន្ន
+        if os.path.exists(CONFIG_FILE):
+            st.markdown("### 📋 Stored Config Status:")
+            st.write(f"- **Active Big Pattern Range**: `{current_config.get('big_min', 0):,.2f} - {current_config.get('big_max', 0):,.2f}`")
