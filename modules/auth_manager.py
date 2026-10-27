@@ -26,7 +26,8 @@ def check_login():
         st.session_state['role'] = ""
 
     if not st.session_state['logged_in']:
-        col_l, col_c, col_r = st.columns([1, 2, 1])
+        # 📌 จัดกึ่งกลางหน้า Login ให้สวยงาม
+        col_l, col_c, col_r = st.columns([1, 1.5, 1])
         with col_c:
             img_path = None
             if os.path.exists("assets/bull&bear"):
@@ -37,19 +38,11 @@ def check_login():
             if img_path and os.path.exists(img_path):
                 try:
                     img = Image.open(img_path)
-                    img_width, img_height = img.size
-                    if img_height > 40:
-                        cropped_img = img.crop((0, 0, img_width, img_height - 40))
-                    else:
-                        cropped_img = img
-                        
-                    r_col1, r_col2, r_col3 = st.columns([1, 2, 1])
-                    with r_col2:
-                        st.image(cropped_img, width=180)
+                    st.image(img, width=160)
                 except Exception:
                     pass
                 
-            st.markdown("<h2 style='text-align: center; color: #DAA520;'>Ironclad Capital - System Login</h2>", unsafe_allow_html=True)
+            st.markdown("<h2 style='text-align: center; color: #DAA520; margin-top: 10px;'>Ironclad Capital</h2>", unsafe_allow_html=True)
             st.markdown("<p style='text-align: center; font-size: 13px; color: gray;'>Institutional SMC Trading System</p>", unsafe_allow_html=True)
             
             with st.form("login_form"):
