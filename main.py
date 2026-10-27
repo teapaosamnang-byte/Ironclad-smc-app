@@ -25,7 +25,20 @@ st.set_page_config(
 # 1. ពិនិត្យការ Login
 if check_login():
     
-    # 2. SIDEBAR LOGO & INFO
+    # 2. HEADER LOGO & TITLE SIDE-BY-SIDE (ដាក់ Ironclad Capital Logo ទន្ទឹមគ្នាជាមួយចំណងជើង)
+    header_col1, header_col2 = st.columns([0.1, 0.9], gap="small")
+    with header_col1:
+        if os.path.exists("assets/logo.png"):
+            st.image("assets/logo.png", width=60)
+        else:
+            st.image("https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=100&h=100&fit=crop", width=60)
+    with header_col2:
+        st.markdown("## **Ironclad Capital Partners - SMC Trading System**")
+        st.markdown("<p style='font-size: 12px; color: gray; margin-top: -15px;'>EMPOWERING GROWTH | Professional Smart Money Concepts (SMC) Real-Time Signal</p>", unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # Sidebar Info
     if os.path.exists("assets/logo.png"):
         st.sidebar.image("assets/logo.png", use_container_width=True)
 
@@ -36,15 +49,13 @@ if check_login():
     st.sidebar.success("Status: Connected to MT5/API")
     st.sidebar.caption(f"👤 User: {st.session_state.get('username')} ({st.session_state.get('role')})")
     
-    # ប៊ូតុង Logout
     st.sidebar.markdown("---")
     logout_button()
 
-    # 3. ROUTING តាមសិទ្ធិ (Role-Based Routing) យ៉ាងដាច់ស្រឡះ
+    # 3. ROUTING តាមសិទ្ធិ (Role-Based Routing)
     user_role = st.session_state.get('role', 'user')
 
     if user_role == 'admin':
-        # 👑 សម្រាប់ Admin: មានជម្រើសមើល Full Dashboard ឬ ចូលទៅគ្រប់គ្រង User
         st.sidebar.markdown("---")
         st.sidebar.subheader("🧭 Admin Navigation")
         admin_page = st.sidebar.radio("ជ្រើសរើសផ្ទាំង", ["📈 SMC Full Dashboard (Admin)", "🛠️ គ្រប់គ្រងអ្នកប្រើប្រាស់ (User Management)"])
@@ -52,7 +63,6 @@ if check_login():
         if admin_page == "🛠️ គ្រប់គ្រងអ្នកប្រើប្រាស់ (User Management)":
             render_admin_dashboard()
         else:
-            # ផ្ទាំង Full Dashboard ពេញលេញសម្រាប់ Admin
             col_charts, col_manual_input = st.columns([1.3, 0.7], gap="medium")
             with col_charts:
                 try:
@@ -72,5 +82,4 @@ if check_login():
             render_news_ticker()
 
     else:
-        # 👤 សម្រាប់ User ធម្មតា: បង្ហាញតែ User Dashboard (មាន Logo, Welcome និងតម្លៃ Signal ប៉ុណ្ណោះ)
         render_user_dashboard()
