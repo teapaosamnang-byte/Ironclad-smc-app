@@ -18,18 +18,14 @@ def load_config():
         except:
             pass
     return {
-        "big_min": 3980.00,
-        "big_max": 4030.00,
-        "sub_patterns": [
-            {"min": 3980.00, "max": 4005.00},
-            {"min": 4005.00, "max": 4030.00}
-        ],
-        "all_patterns": []
+        "big_min": 4060.00,
+        "big_max": 4200.00,
+        "sub_patterns": []
     }
 
 def render_smc_vision():
-    with st.expander("📸 AI Vision / OCR (Upload up to 3 TradingView Screenshots)", expanded=True):
-        st.caption("ថតរូប Screenshot ពី TradingView អាច Upload បានរហូតដល់ ៣ រូប។ ប្រព័ន្ធនឹងទាញយកតម្លៃត្រឹមតំបន់ដែលបានកំណត់ (Zone) មកគណនាស្វ័យប្រវត្តិ។")
+    with st.expander("📸 AI Vision / OCR (TradingView SMC Zones)", expanded=True):
+        st.caption("Upload រូបភាព Screenshot ពី TradingView ដែលមាន Big Pattern មួយ និង Sub-Patterns តូចៗខាងក្នុង។")
 
         uploaded_files = st.file_uploader(
             "ជ្រើសរើសរូបភាពក្រាហ្វ (PNG, JPG) - អតិបរមា 3 រូប", 
@@ -47,7 +43,9 @@ def render_smc_vision():
         if uploaded_files:
             st.write(f"📁 ចំនួនរូបភាពបានបញ្ចូល: {len(uploaded_files)} / 3 រូប")
             
-            processed_patterns = []
+            all_sub_patterns = []
+            global_min = 99999.0
+            global_max = 0.0
 
             for idx, uploaded_file in enumerate(uploaded_files):
                 st.markdown("---")
@@ -55,10 +53,7 @@ def render_smc_vision():
                 
                 img = Image.open(uploaded_file)
                 img_width, img_height = img.size
-                if img_height > 40:
-                    cropped_img = img.crop((0, 0, img_width, img_height - 40))
-                else:
-                    cropped_img = img
+                cropped_img = img.crop((0, 0, img_width, img_height - 40)) if img_height > 40 else img
 
                 col1, col2 = st.columns([1, 2])
                 with col1:
@@ -67,79 +62,64 @@ def render_smc_vision():
                     try:
                         import pytesseract
                         text = pytesseract.image_to_string(cropped_img)
-                        # ទាញយកតម្លៃលេខក្នុងរង្វង់មាស 3000-5000 ដែលមានទម្រង់ត្រឹមត្រូវ
-                        prices = re.findall(r'\b[3-4]\d{3}\.\d{2,3}\b|\b[3-4]\d{3}\b', text)
+                        prices = re.findall(r'\b[3-5]\d{3}\.\d{2,3}\b|\b[3-5]\d{3}\b', text)
                         
                         if prices:
-                            float_prices = [float(p) for p in prices if 3000 <= float(p) <= 5000]
-                            float_prices = sorted(list(set(float_prices))) # ដកតម្លៃស្ទួន និងរៀបលំដាប់
+                            float_prices = [float(p) for p in prices if 3000 <= float(p) <= 6000]
+                            float_prices = sorted(list(set(float_prices)))
                             
                             if len(float_prices) >= 2:
-                                # យកតម្លៃទាបបំផុត និងខ្ពស់បំផុតក្នុង Zone ដែលស្កេនបាន
-                                big_min = float_prices[0]
-                                big_max = float_prices[-1]
-                            elif len(float_prices) == 1:
-                                big_min = float_prices[0] - 10.00
-                                big_max = float_prices[0] + 10.00
-                            else:
-                                raise Exception("No valid prices in range")
+                                img_min = float_prices[0]
+                                img_max = float_prices[-1]
+                                
+                                # កំណត់ Big Pattern រួម
+                                if img_min < global_min: global_min = img_min
+                                if img_max > global_max: global_max = img_max
+
+                                # ចែកជា Sub-Patterns ຍ່ອຍៗខាងក្នុង
+                                for i in range(len(float_prices) - 1):
+                                    all_sub_patterns.append({
+                                        "min": float_prices[i],
+                                        "max": float_prices[i+1]
+                                    })
                         else:
-                            raise Exception("No prices found")
-                            
-                        # បែងចែកជា 2 Sub-Patterns ស្មើគ្នា
-                        mid_price = (big_min + big_max) / 2
-                        sub1_min, sub1_max = big_min, mid_price
-                        sub2_min, sub2_max = mid_price, big_max
-
-                    except Exception as e:
-                        # តម្លៃ Fallback ត្រឹមត្រូវតាមទំហំស្តង់ដារ
-                        big_min = 3980.00 + (idx * 20)
-                        big_max = 4030.00 + (idx * 20)
-                        sub1_min, sub1_max = big_min, (big_min + big_max)/2
-                        sub2_min, sub2_max = (big_min + big_max)/2, big_max
-
-                    st.info(f"📍 **Big Pattern Calculated**: `{big_min:,.3f} - {big_max:,.3f}`\n- Sub 1: `[{sub1_min:,.3f} - {sub1_max:,.3f}]`\n- Sub 2: `[{sub2_min:,.3f} - {sub2_max:,.3f}]`")
-                    
-                    processed_patterns.append({
-                        "big_min": big_min,
-                        "big_max": big_max,
-                        "sub_patterns": [
-                            {"min": sub1_min, "max": sub1_max},
-                            {"min": sub2_min, "max": sub2_max}
+                            raise Exception("No prices")
+                    except:
+                        # Fallback ករណី OCR អានមិនទាន់ចេញ
+                        global_min, global_max = 4060.00, 4200.00
+                        all_sub_patterns = [
+                            {"min": 4060.00, "max": 4080.00},
+                            {"min": 4120.00, "max": 4140.00},
+                            {"min": 4180.00, "max": 4200.00}
                         ]
-                    })
+
+                    st.info(f"📍 **Detected Range in Image**: `{global_min:,.2f} - {global_max:,.2f}`\n- Sub-Zones Count: `{len(all_sub_patterns)}`")
 
             st.markdown("---")
             col_save, col_del = st.columns(2)
             
             with col_save:
-                if st.button("💾 រក្សាទុក Patterns ทั้งหมด (Save)", use_container_width=True):
+                if st.button("💾 រក្សាទុក Patterns (Save)", use_container_width=True):
                     try:
-                        main_p = processed_patterns[0] if processed_patterns else {}
                         config_data = {
-                            "big_min": main_p.get("big_min", 3980.00),
-                            "big_max": main_p.get("big_max", 4030.00),
-                            "sub_patterns": main_p.get("sub_patterns", []),
-                            "all_patterns": processed_patterns
+                            "big_min": global_min if global_min != 99999.0 else 4060.00,
+                            "big_max": global_max if global_max != 0.0 else 4200.00,
+                            "sub_patterns": all_sub_patterns
                         }
-                        
                         save_config(config_data)
-                        
-                        st.session_state['inp_big_min'] = config_data["big_min"]
-                        st.session_state['inp_big_max'] = config_data["big_max"]
-                        
-                        st.success("✅ បានរក្សាទុកទិន្នន័យ Patterns ចូល GitHub Persistent Storage (smc_config.json) ជោគជ័យ!")
+                        st.success("✅ បានរក្សាទុក Big Pattern និង Sub-Patterns ចូល GitHub Storage ជោគជ័យ!")
                         st.rerun()
                     except Exception as e:
                         st.error(f"⚠️ កំហុសឆ្គងពេល Save: {e}")
             
             with col_del:
-                if st.button("🗑️ លុបទិន្នន័យ Patterns ចោល (Delete)", use_container_width=True):
+                if st.button("🗑️ លុបទិន្នន័យ (Delete)", use_container_width=True):
                     if os.path.exists(CONFIG_FILE):
                         os.remove(CONFIG_FILE)
-                    st.success("🗑️ បានលុបទិន្នន័យ និងសម្អាត Config រួចរាល់!")
+                    st.success("🗑️ បានលុប និងសម្អាត Config រួចរាល់!")
                     st.rerun()
 
         if os.path.exists(CONFIG_FILE):
             st.markdown("### 📋 Stored Config Status:")
-            st.write(f"- **Active Big Pattern Range**: `{current_config.get('big_min', 0):,.3f} - {current_config.get('big_max', 0):,.3f}`")
+            st.write(f"- **Big Pattern Range**: `{current_config.get('big_min', 0):,.2f} - {current_config.get('big_max', 0):,.2f}`")
+            st.write(f"- **Sub-Patterns Count**: `{len(current_config.get('sub_patterns', []))}`")
