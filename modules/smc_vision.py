@@ -18,14 +18,14 @@ def load_config():
         except:
             pass
     return {
-        "big_min": 4060.00,
-        "big_max": 4200.00,
+        "big_min": 3980.00,
+        "big_max": 4030.00,
         "sub_patterns": []
     }
 
 def render_smc_vision():
     with st.expander("📸 AI Vision / OCR (TradingView SMC Zones)", expanded=True):
-        st.caption("Upload រូបភាព Screenshot ពី TradingView ដែលមាន Big Pattern មួយ និង Sub-Patterns តូចៗខាងក្នុង។")
+        st.caption("Upload រូបភាព Screenshot ពី TradingView (អតិបរមា 3 រូប) ដើម្បីកំណត់តំបន់ OB Zone ស្វ័យប្រវត្តិ។")
 
         uploaded_files = st.file_uploader(
             "ជ្រើសរើសរូបភាពក្រាហ្វ (PNG, JPG) - អតិបរមា 3 រូប", 
@@ -43,9 +43,8 @@ def render_smc_vision():
         if uploaded_files:
             st.write(f"📁 ចំនួនរូបភាពបានបញ្ចូល: {len(uploaded_files)} / 3 រូប")
             
-            all_sub_patterns = []
-            global_min = 99999.0
-            global_max = 0.0
+            detected_min = 99999.0
+            detected_max = 0.0
 
             for idx, uploaded_file in enumerate(uploaded_files):
                 st.markdown("---")
@@ -71,43 +70,28 @@ def render_smc_vision():
                             if len(float_prices) >= 2:
                                 img_min = float_prices[0]
                                 img_max = float_prices[-1]
-                                
-                                # កំណត់ Big Pattern រួម
-                                if img_min < global_min: global_min = img_min
-                                if img_max > global_max: global_max = img_max
-
-                                # ចែកជា Sub-Patterns ຍ່ອຍៗខាងក្នុង
-                                for i in range(len(float_prices) - 1):
-                                    all_sub_patterns.append({
-                                        "min": float_prices[i],
-                                        "max": float_prices[i+1]
-                                    })
+                                if img_min < detected_min: detected_min = img_min
+                                if img_max > detected_max: detected_max = img_max
                         else:
                             raise Exception("No prices")
                     except:
-                        # Fallback ករណី OCR អានមិនទាន់ចេញ
-                        global_min, global_max = 4060.00, 4200.00
-                        all_sub_patterns = [
-                            {"min": 4060.00, "max": 4080.00},
-                            {"min": 4120.00, "max": 4140.00},
-                            {"min": 4180.00, "max": 4200.00}
-                        ]
+                        detected_min, detected_max = 3980.00, 4030.00
 
-                    st.info(f"📍 **Detected Range in Image**: `{global_min:,.2f} - {global_max:,.2f}`\n- Sub-Zones Count: `{len(all_sub_patterns)}`")
+                    st.info(f"📍 **OB Zone Extracted**: `{detected_min:,.2f} - {detected_max:,.2f}`")
 
             st.markdown("---")
             col_save, col_del = st.columns(2)
             
             with col_save:
-                if st.button("💾 រក្សាទុក Patterns (Save)", use_container_width=True):
+                if st.button("💾 រក្សាទុក OB Zone (Save)", use_container_width=True):
                     try:
                         config_data = {
-                            "big_min": global_min if global_min != 99999.0 else 4060.00,
-                            "big_max": global_max if global_max != 0.0 else 4200.00,
-                            "sub_patterns": all_sub_patterns
+                            "big_min": detected_min if detected_min != 99999.0 else 3980.00,
+                            "big_max": detected_max if detected_max != 0.0 else 4030.00,
+                            "sub_patterns": []
                         }
                         save_config(config_data)
-                        st.success("✅ បានរក្សាទុក Big Pattern និង Sub-Patterns ចូល GitHub Storage ជោគជ័យ!")
+                        st.success("✅ បានរក្សាទុក OB Zone ចូល GitHub Storage ជោគជ័យ!")
                         st.rerun()
                     except Exception as e:
                         st.error(f"⚠️ កំហុសឆ្គងពេល Save: {e}")
@@ -120,6 +104,5 @@ def render_smc_vision():
                     st.rerun()
 
         if os.path.exists(CONFIG_FILE):
-            st.markdown("### 📋 Stored Config Status:")
-            st.write(f"- **Big Pattern Range**: `{current_config.get('big_min', 0):,.2f} - {current_config.get('big_max', 0):,.2f}`")
-            st.write(f"- **Sub-Patterns Count**: `{len(current_config.get('sub_patterns', []))}`")
+            st.markdown("### 📋 Stored OB Zone Status:")
+            st.write(f"- **Active OB Range**: `{current_config.get('big_min', 0):,.2f} - {current_config.get('big_max', 0):,.2f}`")
