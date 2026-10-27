@@ -9,7 +9,7 @@ def check_login():
         logo_path = "assets/logo.png"
         bullbear_path = "assets/bull&bear.png"
         
-        # 📌 ប្រើប្រាស់ Streamlit Columns ចង្អៀតនៅកណ្តាល ធានាលេចចេញរូបភាពធំស្មើគ្នា (Width = 110px) យ៉ាងស្អាត
+        # 📌 ប្រើប្រាស់ Streamlit Columns ចង្អៀតនៅកណ្តាល ធានាលេចចេញរូបភាពធំស្មើគ្នា និងមិនមាន Error
         col_space1, col_img1, col_img2, col_space2 = st.columns([2.3, 1, 1, 2.3], gap="small")
         
         with col_img1:
