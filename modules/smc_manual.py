@@ -1,20 +1,9 @@
 import streamlit as st
-from PIL import Image
-import re
-import json
-import os
-
-CONFIG_FILE = "smc_config.json"
-
-def save_config(data):
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(data, f, indent=4)
 
 def render_smc_manual():
     st.markdown("### 📝 SMC Manual Input & AI OCR Panel")
     st.caption("បញ្ចូលតម្លៃ SMC Liquidity Zones ដោយផ្ទាល់ ឬ Upload រូបភាព Screenshot ពី TradingView (អតិបរមា 3 រូប)")
 
-    # គ្រប់គ្រងរូបភាព Upload តាម Session State
     if 'uploaded_vision_files' not in st.session_state:
         st.session_state['uploaded_vision_files'] = []
 
@@ -31,7 +20,6 @@ def render_smc_manual():
             uploaded_files = uploaded_files[:3]
         st.session_state['uploaded_vision_files'] = uploaded_files
 
-    # បង្ហាញរូបភាពដែលបាន Upload និងប៊ូតុងលុបចោល
     if st.session_state['uploaded_vision_files']:
         st.write(f"📁 ចំនួនរូបភាពបានបញ្ចូល: {len(st.session_state['uploaded_vision_files'])} / 3 រូប")
         
@@ -47,9 +35,9 @@ def render_smc_manual():
     st.markdown("---")
 
     # ==========================================
-    # 📌 1. BIG PATTERNS (អាចបញ្ចូល Big Pattern បាន 3)
+    # 📌 1. BIG PATTERNS (3 Patterns)
     # ==========================================
-    st.subheader("1. Big Patterns (អាចកំណត់បាន 3)")
+    st.subheader("1. Big Patterns (អាចកំណត់ได้ 3)")
     
     for bp in range(1, 4):
         with st.expander(f"📌 Big Pattern {bp}", expanded=(bp == 1)):
@@ -78,7 +66,7 @@ def render_smc_manual():
     st.markdown("---")
 
     # ==========================================
-    # 📌 2. SUB-PATTERNS (ដាក់ក្នុង Expander កុំឱ្យវែងពេក)
+    # 📌 2. SUB-PATTERNS (6 Sub-Zones in Expanders)
     # ==========================================
     st.subheader("2. Sub-Patterns (6 Sub-Zones)")
 
