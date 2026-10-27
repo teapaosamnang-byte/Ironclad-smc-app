@@ -6,17 +6,17 @@ def check_login():
         st.session_state['logged_in'] = False
         
     if not st.session_state['logged_in']:
-        # 📌 រៀបចំ Columns សម្រាប់ដាក់ Logo ពីរទន្ទឹមគ្នា (Ironclad Logo + Bull & Bear) លើ Header Login
-        col_l1, col_l2 = st.columns([1, 1])
+        # 📌 ដាក់ Logo ទាំងពីរទន្ទឹមគ្នាដោយទាញចេញពី Folder assets តាមឈ្មោះពិតប្រាកដ
+        col_l1, col_l2 = st.columns([1, 1], gap="small")
         
         with col_l1:
             if os.path.exists("assets/logo.png"):
                 st.image("assets/logo.png", width=120)
-            else:
-                st.image("https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=150&h=150&fit=crop", width=120)
                 
         with col_l2:
-            st.image("https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=150&h=150&fit=crop", width=120)
+            # ប្រើឈ្មោះ "assets/bull&bear.png" ឱ្យត្រូវចំតាម GitHub ของបង
+            if os.path.exists("assets/bull&bear.png"):
+                st.image("assets/bull&bear.png", width=120)
 
         st.markdown("<h2 style='text-align: center;'>Ironclad Capital - System Login</h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: gray;'>Institutional SMC Trading System</p>", unsafe_allow_html=True)
