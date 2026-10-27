@@ -52,8 +52,9 @@ if check_login():
         if admin_page == "🛠️ គ្រប់គ្រងអ្នកប្រើប្រាស់ (User Management)":
             render_admin_dashboard()
         else:
-            # ផ្ទាំង Full Dashboard ពេញលេញសម្រាប់ Admin (គ្មានរូបភាពតូចៗរញ៉េរញ៉ៃទៀតទេ)
+            # 📌 ផ្ទាំង Full Dashboard: បែងចែកជា ២ Column (ខាងឆ្វេង Chart, ខាងស្តាំ Vision OCR & Manual Input)
             col_charts, col_manual_input = st.columns([1.3, 0.7], gap="medium")
+            
             with col_charts:
                 try:
                     render_trading_view()
@@ -63,6 +64,7 @@ if check_login():
                 render_analytical_chart()
 
             with col_manual_input:
+                # 📌 ហៅ AI OCR Panel និង Manual Input មកបង្ហាញនៅខាងស្តាំវិញ
                 render_smc_vision()
                 st.markdown("---")
                 render_smc_manual()
