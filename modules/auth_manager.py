@@ -9,22 +9,18 @@ def check_login():
         logo_path = "assets/logo.png"
         bullbear_path = "assets/bull&bear.png"
         
-        # 📌 ប្រើប្រាស់ Columns ចង្អៀតនៅកណ្តាល និងកំណត់ width ស្មើគ្នាច្បាស់លាស់ (ឧទាហរណ៍: 130px ទាំងសងខាង)
-        col_space1, col_img1, col_img2, col_space2 = st.columns([2.3, 1, 1, 2.3], gap="small")
-        
-        with col_img1:
-            if os.path.exists(logo_path):
-                st.image(logo_path, width=130)
-            elif os.path.exists("logo.png"):
-                st.image("logo.png", width=130)
-                
-        with col_img2:
-            if os.path.exists(bullbear_path):
-                st.image(bullbear_path, width=130)
-            elif os.path.exists("bull&bear.png"):
-                st.image("bull&bear.png", width=130)
+        # 📌 ប្រើប្រាស់ HTML Flexbox ដាក់រូបទាំងពីរឱ្យនៅកៀកគ្នាចំកណ្តាល និងកំណត់ height/width ឱ្យស្មើគ្នាច្បាស់លាស់
+        st.markdown(
+            """
+            <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 10px;">
+                <img src="app/static/assets/logo.png" style="width: 110px; height: 110px; object-fit: contain; border-radius: 8px;">
+                <img src="app/static/assets/bull&bear.png" style="width: 110px; height: 110px; object-fit: contain; border-radius: 8px;">
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-        st.markdown("<h2 style='text-align: center; margin-top: 10px;'>Ironclad Capital - System Login</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; margin-top: 5px;'>Ironclad Capital - System Login</h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: gray;'>Institutional SMC Trading System</p>", unsafe_allow_html=True)
 
         # 🔐 រក្សាលក្ខខណ្ឌ Form Login និង Role Check ដើមទាំងអស់យ៉ាងครบถ้วน
