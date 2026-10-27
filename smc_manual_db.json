@@ -1,0 +1,50 @@
+{
+    "big_pattern": {
+        "bo_h_b_min": 4217.74,
+        "bo_h_b_max": 4225.0,
+        "bo_h_w_min": 4220.0,
+        "bo_h_w_max": 4227.11,
+        "bo_l_b_min": 4070.0,
+        "bo_l_b_max": 4083.62,
+        "bo_l_w_min": 4066.73,
+        "bo_l_w_max": 4085.0
+    },
+    "sub_patterns": {
+        "p1": {
+            "top_min": 4144.0,
+            "top_max": 4149.0,
+            "bot_min": 4102.0,
+            "bot_max": 4107.0
+        },
+        "p2": {
+            "top_min": 4148.0,
+            "top_max": 4153.0,
+            "bot_min": 4104.0,
+            "bot_max": 4109.0
+        },
+        "p3": {
+            "top_min": 4152.0,
+            "top_max": 4157.0,
+            "bot_min": 4106.0,
+            "bot_max": 4111.0
+        },
+        "p4": {
+            "top_min": 4156.0,
+            "top_max": 4161.0,
+            "bot_min": 4108.0,
+            "bot_max": 4113.0
+        },
+        "p5": {
+            "top_min": 4160.0,
+            "top_max": 4165.0,
+            "bot_min": 4110.0,
+            "bot_max": 4115.0
+        },
+        "p6": {
+            "top_min": 4164.0,
+            "top_max": 4169.0,
+            "bot_min": 4112.0,
+            "bot_max": 4117.0
+        }
+    }
+}

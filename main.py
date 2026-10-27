@@ -1,63 +1,76 @@
 import streamlit as st
+import os
 
-from modules.auth import check_activation
+from modules.auth_manager import check_login, logout_button
+from modules.admin_dashboard import render_admin_dashboard
+from modules.user_dashboard import render_user_dashboard
+
+# Imports សម្រាប់ Admin Full Dashboard
 from modules.trading_view import render_trading_view
-from modules.smc_analysis import render_smc_analysis
 from modules.smc_manual import render_smc_manual
-from modules.news_module import render_news_module
+from modules.smc_chart import render_analytical_chart
+from modules.smc_vision import render_smc_vision
+from modules.smc_execution import render_smc_execution
+from modules.news import render_news_ticker
 
+# ==========================================
+# 🚀 STREAMLIT PAGE CONFIG & LAYOUT SETUP
+# ==========================================
 st.set_page_config(
     page_title="Ironclad Capital Partners - SMC",
-    page_icon="📊",
+    page_icon="📈",
     layout="wide"
 )
 
-if not check_activation():
-    st.stop()
-
-with st.sidebar:
-    try:
-        st.image("assets/logo.png", width=200)
-    except Exception:
-        st.title("IRONCLAD CAPITAL")
-
-    st.markdown("### Navigation Menu")
-    menu = st.radio(
-        "ជ្រើសរើសជម្រើស:",
-        ["Dashboard & SMC", "News Analysis", "អំពីពួកយើង"]
-    )
-
-    st.divider()
-    st.caption("🟢 Status: Connected to MT5/API")
-    st.caption("📌 Version: 1.0.0 Pro")
+# 1. ពិនិត្យការ Login
+if check_login():
     
-    if st.button("🔒 ចាកចេញ (Logout)", use_container_width=True):
-        st.session_state.is_activated = False
-        st.rerun()
+    # 2. SIDEBAR LOGO & INFO
+    if os.path.exists("assets/logo.png"):
+        st.sidebar.image("assets/logo.png", use_container_width=True)
 
-if menu == "Dashboard & SMC":
-    st.title("📊 Dashboard & SMC Analysis")
+    st.sidebar.markdown("<h3 style='text-align: center; margin-bottom: 0px;'>Ironclad Capital</h3>", unsafe_allow_html=True)
+    st.sidebar.markdown("<p style='text-align: center; font-size: 11px; color: gray;'>EMPOWERING GROWTH</p>", unsafe_allow_html=True)
+    st.sidebar.markdown("---")
 
-    # បែងចែក Column ជា ២ មេ (ខាងឆ្វេងសម្រាប់ Chart + Manual SMC, ខាងស្តាំសម្រាប់ Auto SMC)
-    col_left, col_right = st.columns([1.6, 1])
+    st.sidebar.success("Status: Connected to MT5/API")
+    st.sidebar.caption(f"👤 User: {st.session_state.get('username')} ({st.session_state.get('role')})")
+    
+    # ប៊ូតុង Logout
+    st.sidebar.markdown("---")
+    logout_button()
 
-    with col_left:
-        # ផ្នែកខាងឆ្វេងផ្នែកខាងលើ៖ Live Chart
-        render_trading_view()
+    # 3. ROUTING តាមសិទ្ធិ (Role-Based Routing) យ៉ាងដាច់ស្រឡះ
+    user_role = st.session_state.get('role', 'user')
+
+    if user_role == 'admin':
+        # 👑 សម្រាប់ Admin: មានជម្រើសមើល Full Dashboard ឬ ចូលទៅគ្រប់គ្រង User
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("🧭 Admin Navigation")
+        admin_page = st.sidebar.radio("ជ្រើសរើសផ្ទាំង", ["📈 SMC Full Dashboard (Admin)", "🛠️ គ្រប់គ្រងអ្នកប្រើប្រាស់ (User Management)"])
         
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # ផ្នែកខាងឆ្វេងផ្នែកខាងក្រោម៖ Manual SMC Analysis (ដាក់ជាប់ក្រោម Live Chart តែម្តង)
-        render_smc_manual()
+        if admin_page == "🛠️ គ្រប់គ្រងអ្នកប្រើប្រាស់ (User Management)":
+            render_admin_dashboard()
+        else:
+            # ផ្ទាំង Full Dashboard ពេញលេញសម្រាប់ Admin
+            col_charts, col_manual_input = st.columns([1.3, 0.7], gap="medium")
+            with col_charts:
+                try:
+                    render_trading_view()
+                except Exception as e:
+                    st.info("TradingView Component Loading...")
+                st.markdown("---")
+                render_analytical_chart()
 
-    with col_right:
-        # ផ្នែកខាងស្តាំ៖ Auto SMC Analysis (រក្សាទុកធម្មតា)
-        render_smc_analysis()
+            with col_manual_input:
+                render_smc_vision()
+                st.markdown("---")
+                render_smc_manual()
 
-elif menu == "News Analysis":
-    st.title("📰 Financial & Geopolitical News")
-    render_news_module()
+            st.markdown("---")
+            render_smc_execution()
+            render_news_ticker()
 
-elif menu == "អំពីពួកយើង":
-    st.title("ℹ️ អំពី Ironclad Capital Partners")
-    st.write("ប្រព័ន្ធវិភាគទីផ្សារ Gold/XAUUSD ដោយប្រើប្រាស់ Smart Money Concepts (SMC) Strategy។")
+    else:
+        # 👤 សម្រាប់ User ធម្មតា: បង្ហាញតែ User Dashboard (មាន Logo, Welcome និងតម្លៃ Signal ប៉ុណ្ណោះ)
+        render_user_dashboard()
