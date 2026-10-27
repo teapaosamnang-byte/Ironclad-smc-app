@@ -12,8 +12,8 @@ def load_config():
         except:
             pass
     return {
-        "big_min": 4060.00,
-        "big_max": 4200.00,
+        "big_min": 3980.00,
+        "big_max": 4030.00,
         "sub_patterns": []
     }
 
@@ -26,42 +26,32 @@ def get_live_market_price(symbol="XAUUSD"):
                 return (tick.bid + tick.ask) / 2
     except:
         pass
-    return st.session_state.get('live_price_override', 4009.295)
+    return st.session_state.get('live_price_override', 4022.005)
 
 def evaluate_smc_conditions(current_price, config):
-    big_min = config.get("big_min", 4060.00)
-    big_max = config.get("big_max", 4200.00)
-    sub_patterns = config.get("sub_patterns", [])
+    big_min = config.get("big_min", 3980.00)
+    big_max = config.get("big_max", 4030.00)
 
-    # ពិនិត្យថាតើតម្លៃស្ថិតក្នុង Sub-Pattern ណាមួយដែលបានកំណត់ច្បាស់លាស់ដែរឬទេ
-    hit_sub = None
-    for sub in sub_patterns:
-        if sub.get("min", 0) <= current_price <= sub.get("max", 0):
-            hit_sub = sub
-            break
-
-    is_in_big_zone = big_min <= current_price <= big_max
-    is_confirmed = hit_sub is not None  # ត្រូវតែប៉ះចំ Sub-pattern (OB) ទើបຖືថា Confirm
-
+    # ពិនិត្យថាតើតម្លៃបានចូលដល់ OB Zone ហើយឬยัง
+    is_in_ob_zone = big_min <= current_price <= big_max
+    
     mid_price = (big_min + big_max) / 2
-
-    # កំណត់ទិសដៅ Buy ឬ Sell តែមួយផ្លូវច្បាស់លាស់ មិនឱ្យវង្វេង
+    
     if current_price < mid_price:
         signal_type = "BUY"
-        action = "BUY SIGNAL (DISCOUNT ZONE)"
+        action = "BUY SIGNAL (DISCOUNT OB)"
         entry = current_price
         sl = big_min - 10.00
         tp = big_max + 20.00
     else:
         signal_type = "SELL"
-        action = "SELL SIGNAL (PREMIUM ZONE)"
+        action = "SELL SIGNAL (PREMIUM OB)"
         entry = current_price
         sl = big_max + 10.00
         tp = big_min - 20.00
 
     return {
-        "is_in_zone": is_in_big_zone,
-        "is_confirmed": is_confirmed,
+        "is_in_ob_zone": is_in_ob_zone,
         "signal_type": signal_type,
         "action": action,
         "entry": entry,
@@ -84,16 +74,16 @@ def render_smc_execution():
     # ==========================================
     if user_role == 'admin':
         st.markdown("### ⚡ SMC Real-time Execution (Admin Dashboard)")
-        st.caption("ប្រព័ន្ធទាញយកតម្លៃ Real-time និងផ្ទៀងផ្ទាត់តាម Sub-Patterns ស្វ័យប្រវត្តិ។")
+        st.caption("ប្រព័ន្ធតាមដានតម្លៃ Real-time និងរង់ចាំតម្លៃចូលដល់ OB Zone មុននឹងបញ្ជាក់សញ្ញា។")
 
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric(label="🪙 XAUUSD Real-time Price", value=f"{live_price:,.3f}")
         with col2:
-            st.metric(label="📍 Big Pattern Range", value=f"{analysis['big_min']:,.2f} - {analysis['big_max']:,.2f}")
+            st.metric(label="📍 OB Zone Range", value=f"{analysis['big_min']:,.2f} - {analysis['big_max']:,.2f}")
         with col3:
-            if analysis['is_confirmed']:
-                st.success("🟢 OB CONFIRMED")
+            if analysis['is_in_ob_zone']:
+                st.success("🟢 INSIDE OB ZONE")
             else:
                 st.warning("⚪ WAITING FOR OB")
 
@@ -103,14 +93,14 @@ def render_smc_execution():
             st.write(f"- **SL**: `{analysis['sl']:,.3f}` | **TP**: `{analysis['tp']:,.3f}`")
 
     # ==========================================
-    # 👤 USER VIEW (បង្ហាញសញ្ញាតែមួយផ្លូវ ពេលតម្លៃចូលដល់ OB Zone)
+    # 👤 USER VIEW (បង្ហាញសញ្ញាតែមួយផ្លូវ ពេលតម្លៃចូលដល់ OB Zone ពិតប្រាកដ)
     # ==========================================
     else:
         st.markdown("### 🚨 SMC Trade Signals")
         st.caption("សញ្ញាបញ្ជាទិញលក់ជាក់ស្តែងផ្អែកលើប្រព័ន្ធ SMC ។")
 
-        if analysis['is_confirmed']:
-            st.success("🟢 **SIGNAL STATUS: ORDER BLOCK CONFIRMED**")
+        if analysis['is_in_ob_zone']:
+            st.success("🟢 **SIGNAL STATUS: PRICE HIT OB ZONE & CONFIRMED**")
             st.markdown(f"### 🎯 Active Direction: **{analysis['action']}**")
             
             col_u1, col_u2, col_u3 = st.columns(3)
@@ -121,5 +111,5 @@ def render_smc_execution():
             with col_u3:
                 st.metric(label="🎯 Take Profit (TP)", value=f"{analysis['tp']:,.3f}")
         else:
-            st.info("⚪ **SIGNAL STATUS: WAITING FOR PRICE TO HIT ORDER BLOCK (OB)**")
-            st.write("តម្លៃបច្ចុប្បន្នមិនទាន់ចូលដល់កម្រិត Order Block ដែលបានកំណត់ទេ។ ប្រព័ន្ធកំពុងតាមដានជាប្រចាំ។")
+            st.info("⚪ **SIGNAL STATUS: WAITING FOR PRICE TO REACH OB ZONE**")
+            st.write("តម្លៃបច្ចុប្បន្ននៅក្រៅតំបន់ OB Zone។ ប្រព័ន្ធកំពុងរង់ចាំរហូតដល់តម្លៃចូលដល់ទើបចេញសញ្ញាបញ្ជាក់ជូន។")
