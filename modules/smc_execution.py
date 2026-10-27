@@ -5,18 +5,16 @@ def render_smc_execution():
     st.markdown("---")
     user_role = st.session_state.get('role', 'user')
 
-    # ទាញយកតម្លៃពី Big Pattern ទី 1 មកធ្វើជាតម្លៃគោល
     bg_min = st.session_state.get('inp_bg_1_min', 4000.00)
     bg_max = st.session_state.get('inp_bg_1_max', 4030.00)
     current_price = st.session_state.get('live_market_price', 4022.00)
 
-    # លក្ខខណ្ឌ SMC: ត្រូវរង់ចាំតម្លៃឡើងដល់ OB Zone, Liquidity Sweep និង 15m/5m Confirmation
+    # លក្ខខណ្ឌ SMC: OB Zone + Liquidity Sweep + 15m/5m Confirmation
     is_in_ob_zone = bg_min <= current_price <= bg_max
     is_liquidity_swept_and_confirmed = is_in_ob_zone and (current_price >= (bg_max - 10.00) or current_price <= (bg_min + 10.00))
 
     mid_price = (bg_min + bg_max) / 2
     
-    # កំណត់ទិសដៅ Exclusive Direction (Sell តែមួយផ្លូវបើอยู่ Premium Zone)
     if current_price >= mid_price:
         action = "SELL SIGNAL (PREMIUM OB & LIQUIDITY SWEEP)"
         signal_type = "SELL"
@@ -54,7 +52,7 @@ def render_smc_execution():
             st.write(f"- **Stop Loss (SL)**: `{sl:,.2f}` | **Take Profit (TP)**: `{tp:,.2f}`")
 
     # ==========================================
-    # 👤 USER VIEW (បង្ហាញតែសញ្ញា Buy ឬ Sell, Entry, TP, SL យ៉ាងច្បាស់)
+    # 👤 USER VIEW (បង្ហាញតែសញ្ញា Buy/Sell និង Entry, TP, SL ប៉ុណ្ណោះ)
     # ==========================================
     else:
         st.markdown("### 🚨 SMC Trade Signals")
@@ -73,4 +71,4 @@ def render_smc_execution():
                 st.metric(label="🎯 Take Profit (TP)", value=f"{tp:,.2f}")
         else:
             st.info("⚪ **SIGNAL STATUS: WAITING FOR PRICE TO REACH OB & LIQUIDITY SWEEP**")
-            st.write("តម្លៃបច្ចុប្បន្នមិនទាន់ចូលដល់តំបន់ OB Zone និងមិនទាន់មានการបោស Liquidity + 15m/5m Confirm ទេ។ ប្រព័ន្ធកំពុងរង់ចាំតាមដានอย่างដិតដល់។")
+            st.write("តម្លៃបច្ចុប្បន្នមិនទាន់ចូលដល់តំបន់ OB Zone និងមិនទាន់មានការបោស Liquidity + 15m/5m Confirm ទេ។ ប្រព័ន្ធកំពុងរង់ចាំតាមដានយ៉ាងម៉ត់ចត់។")
