@@ -6,19 +6,33 @@ def check_login():
         st.session_state['logged_in'] = False
         
     if not st.session_state['logged_in']:
-        # 📌 ដាក់ Logo ទាំងពីរទន្ទឹមគ្នាដោយទាញចេញពី Folder assets តាមឈ្មោះពិតប្រាកដ
-        col_l1, col_l2 = st.columns([1, 1], gap="small")
+        # 📌 ប្រើប្រាស់ HTML/CSS ដើម្បីដាក់រូបទាំងពីរឱ្យនៅកៀកគ្នាចំកណ្តាល និងទំហំធ្មេចសមរម្យ
+        logo_path = "assets/logo.png"
+        bullbear_path = "assets/bull&bear.png"
         
-        with col_l1:
-            if os.path.exists("assets/logo.png"):
-                st.image("assets/logo.png", width=120)
-                
-        with col_l2:
-            # ប្រើឈ្មោះ "assets/bull&bear.png" ឱ្យត្រូវចំតាម GitHub ของបង
-            if os.path.exists("assets/bull&bear.png"):
-                st.image("assets/bull&bear.png", width=120)
+        # បង្កើត Container จัดกึ่งกลาง
+        st.markdown(
+            """
+            <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 10px;">
+            """, 
+            unsafe_allow_html=True
+        )
+        
+        # ប្រើ Streamlit columns ខាងក្នុង container ជាមួយទំហំ width 150px (ធំជាងមុនបន្តិច និងស្មើគ្នា)
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            st.markdown("<div style='display: flex; justify-content: flex-end;'>", unsafe_allow_html=True)
+            if os.path.exists(logo_path):
+                st.image(logo_path, width=140)
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+        with col2:
+            st.markdown("<div style='display: flex; justify-content: flex-start;'>", unsafe_allow_html=True)
+            if os.path.exists(bullbear_path):
+                st.image(bullbear_path, width=140)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown("<h2 style='text-align: center;'>Ironclad Capital - System Login</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; margin-top: 10px;'>Ironclad Capital - System Login</h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: gray;'>Institutional SMC Trading System</p>", unsafe_allow_html=True)
 
         with st.form("login_form"):
