@@ -18,23 +18,25 @@ st.set_page_config(
 )
 
 if check_login():
-    # 📌 ដាក់ Logo Ironclad Capital ឱ្យនៅទន្ទឹមគ្នាជាមួយ Bull & Bear (Side-by-side Header)
-    header_col1, header_col2, header_col3 = st.columns([0.1, 0.1, 0.8], gap="small")
-    with header_col1:
+    # 📌 រៀបចំ Header ឱ្យ Logo របស់ Ironclad Capital និង Bull & Bear នៅទន្ទឹមគ្នា
+    col_logo, col_bear, col_title = st.columns([0.08, 0.08, 0.84], gap="small")
+    
+    with col_logo:
         if os.path.exists("assets/logo.png"):
             st.image("assets/logo.png", width=55)
         else:
             st.image("https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=100&h=100&fit=crop", width=55)
-    with header_col2:
-        # រូបភាព Bull & Bear ដាក់ទន្ទឹមគ្នា
+            
+    with col_bear:
         st.image("https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=100&h=100&fit=crop", width=55)
-    with header_col3:
+        
+    with col_title:
         st.markdown("## **Ironclad Capital Partners - SMC Trading System**")
         st.markdown("<p style='font-size: 12px; color: gray; margin-top: -15px;'>EMPOWERING GROWTH | Institutional Smart Money Concepts (SMC) Signal</p>", unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # Sidebar Info
+    # Sidebar
     if os.path.exists("assets/logo.png"):
         st.sidebar.image("assets/logo.png", use_container_width=True)
 
