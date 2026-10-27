@@ -1,7 +1,6 @@
 import streamlit as st
 import json
 import os
-import time
 
 CONFIG_FILE = "smc_config.json"
 
@@ -22,9 +21,6 @@ def load_config():
     }
 
 def get_live_market_price(symbol="XAUUSD"):
-    """
-    ទាញយកតម្លៃ Real-time ស្វ័យប្រវត្តិពី MT5 (ឬ Fallback ករណី Cloud)
-    """
     try:
         import MetaTrader5 as mt5
         if mt5.initialize():
@@ -33,46 +29,37 @@ def get_live_market_price(symbol="XAUUSD"):
                 return (tick.bid + tick.ask) / 2
     except:
         pass
-    
-    # ករណីរត់លើ Cloud ឬគ្មាន MT5 គឺទាញយកតម្លៃ Simul/Fallback ចុងក្រោយ
     return st.session_state.get('live_price_override', 4008.385)
 
 def evaluate_smc_conditions(current_price, config):
-    """
-    អនុវត្តរូបមន្ត SMC Analysis ដើម្បីផ្ទៀងផ្ទាត់លក្ខខណ្ឌចូលផ្សារ (Entry Signals)
-    """
     big_min = config.get("big_min", 3980.00)
     big_max = config.get("big_max", 4030.00)
-    sub_patterns = config.get("sub_patterns", [])
-
-    is_in_big_zone = big_min <= current_price <= big_max
-    active_sub = None
     
-    for idx, sub in enumerate(sub_patterns):
-        if sub.get("min", 0) <= current_price <= sub.get("max", 0):
-            active_sub = f"Sub-Pattern {idx+1}"
-            break
+    is_in_big_zone = big_min <= current_price <= big_max
 
-    # កំណត់ Signal Condition តាមរូបមន្ត SMC
-    if is_in_big_zone:
-        if active_sub:
-            signal = f"🔥 ENTRY CONFIRMED ({active_sub})"
-            status_color = "success"
-        else:
-            signal = "👀 WATCHING ZONE (Inside Big Pattern)"
-            status_color = "info"
-    elif current_price > big_max:
-        signal = "⚠️ OVERBOUGHT / PREMIUM ZONE"
-        status_color = "warning"
+    # កំណត់ទិសដៅតែមួយផ្លូវគត់ (Exclusive Direction: BUY or SELL only)
+    mid_price = (big_min + big_max) / 2
+    
+    if current_price < mid_price:
+        action = "BUY SIGNAL (DISCOUNT ZONE)"
+        signal_type = "BUY"
+        entry = current_price
+        sl = big_min - 5.00
+        tp = big_max + 15.00
     else:
-        signal = "📉 DISCOUNT ZONE / WAITING"
-        status_color = "error"
+        action = "SELL SIGNAL (PREMIUM ZONE)"
+        signal_type = "SELL"
+        entry = current_price
+        sl = big_max + 5.00
+        tp = big_min - 15.00
 
     return {
         "is_in_zone": is_in_big_zone,
-        "active_sub": active_sub,
-        "signal": signal,
-        "status_color": status_color,
+        "action": action,
+        "signal_type": signal_type,
+        "entry": entry,
+        "sl": sl,
+        "tp": tp,
         "big_min": big_min,
         "big_max": big_max
     }
@@ -80,18 +67,13 @@ def evaluate_smc_conditions(current_price, config):
 @st.fragment
 def render_smc_execution():
     st.markdown("---")
-    
     user_role = st.session_state.get('role', 'user')
     config = load_config()
-    
-    # 1. ទាញយកតម្លៃ Real-time ដោយស្វ័យប្រវត្តិ
     live_price = get_live_market_price("XAUUSD")
-    
-    # 2. រត់រូបមន្តវិភាគ SMC ស្វ័យប្រវត្តិ
     analysis = evaluate_smc_conditions(live_price, config)
 
     # ==========================================
-    # 👑 ADMIN VIEW (បង្ហាញទិន្នន័យពេញលេញ + Controls)
+    # 👑 ADMIN VIEW (បង្ហាញគ្រប់យ៉ាងពេញលេញ)
     # ==========================================
     if user_role == 'admin':
         st.markdown("### ⚡ SMC Real-time Execution (Admin Dashboard)")
@@ -103,39 +85,36 @@ def render_smc_execution():
         with col2:
             st.metric(label="📍 Active Big Pattern Zone", value=f"{analysis['big_min']:,.2f} - {analysis['big_max']:,.2f}")
         with col3:
-            if analysis['status_color'] == 'success':
-                st.success(analysis['signal'])
-            elif analysis['status_color'] == 'warning':
-                st.warning(analysis['signal'])
-            elif analysis['status_color'] == 'info':
-                st.info(analysis['signal'])
+            if analysis['is_in_zone']:
+                st.success("🟢 INSIDE ZONE")
             else:
-                st.error(analysis['signal'])
+                st.warning("⚪ OUTSIDE ZONE")
 
-        with st.expander("🔍 Admin Detailed Pattern Analysis & Sub-Zones", expanded=True):
-            st.write(f"- ** Big Pattern Range**: `[{analysis['big_min']:,.2f} - {analysis['big_max']:,.2f}]`")
-            st.write(f"- ** Current Trigger Status**: **{analysis['signal']}**")
-            
-            sub_patterns = config.get("sub_patterns", [])
-            for idx, sub in enumerate(sub_patterns):
-                s_min, s_max = sub.get("min", 0), sub.get("max", 0)
-                hit = "🟢 ACTIVE/HIT" if s_min <= live_price <= s_max else "⚪ Out of Range"
-                st.write(f"  - Sub-Pattern {idx+1} `[{s_min:,.2f} - {s_max:,.2f}]`: {hit}")
+        with st.expander("🔍 Admin Detailed Analysis", expanded=True):
+            st.write(f"- **Direction**: **{analysis['action']}**")
+            st.write(f"- **Suggested Entry**: `{analysis['entry']:,.3f}`")
+            st.write(f"- **Stop Loss (SL)**: `{analysis['sl']:,.3f}`")
+            st.write(f"- **Take Profit (TP)**: `{analysis['tp']:,.3f}`")
 
     # ==========================================
-    # 👤 USER VIEW (បង្ហាញតែ Conditions ដែលកំណត់ឱ្យឃើញ)
+    # 👤 USER VIEW (បង្ហាញសញ្ញាតែមួយផ្លូវគត់: Buy ឬ Sell ណាមួយច្បាស់លាស់)
     # ==========================================
     else:
-        st.markdown("### 📊 SMC Market Signals (User View)")
-        st.caption("ស្ថានភាពទីផ្សារបច្ចុប្បន្នផ្អែកលើការវិភាគ SMC។")
+        st.markdown("### 🚨 SMC Trade Signals")
+        st.caption("សញ្ញាបញ្ជាទិញលក់ជាក់ស្តែងផ្អែកលើប្រព័ន្ធ SMC ។")
 
-        col_u1, col_u2 = st.columns(2)
+        if analysis['is_in_zone']:
+            st.success("🟢 **SIGNAL STATUS: ACTIVE ZONE HIT**")
+        else:
+            st.info("⚪ **SIGNAL STATUS: WAITING FOR ZONE**")
+
+        # បង្ហាញសញ្ញាតែមួយផ្លូវ (BUY ឬ SELL មិនលាយគ្នា)
+        st.markdown(f"### 🎯 Active Direction: **{analysis['action']}**")
+        
+        col_u1, col_u2, col_u3 = st.columns(3)
         with col_u1:
-            st.metric(label="🪙 Current Market Price", value=f"{live_price:,.3f}")
+            st.metric(label="📍 Entry Price", value=f"{analysis['entry']:,.3f}")
         with col_u2:
-            if analysis['is_in_zone']:
-                st.success("🟢 Market in Analysis Zone")
-            else:
-                st.info("⚪ Market Outside Analysis Zone")
-
-        st.info(f"📋 **Market Signal**: {analysis['signal']}")
+            st.metric(label="🛡️ Stop Loss (SL)", value=f"{analysis['sl']:,.3f}")
+        with col_u3:
+            st.metric(label="🎯 Take Profit (TP)", value=f"{analysis['tp']:,.3f}")
