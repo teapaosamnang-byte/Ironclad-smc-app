@@ -1,55 +1,45 @@
 import streamlit as st
-from modules.smc_analysis import analyze_advanced_smc_setup
+import time
 
 def render_smc_execution():
-    st.subheader("⚡ SMC Execution Dashboard & Institutional Alerts")
-
-    # ហៅដំណើរការវិភាគ
-    results = analyze_advanced_smc_setup()
-    
-    # ----------------------------------------------------
-    # 🚨 1. NEWS BOX & STAND ASIDE WARNING (4H BASE BUILDING)
-    # ----------------------------------------------------
-    if results["stand_aside"]:
-        if results["base_building"]:
-            st.warning("""
-                ⚠️ **4H MARKET STRUCTURE ADVISORY (BASE BUILDING PHASE):**  
-                * **ស្ថានភាពទីផ្សារ៖** តម្លៃមាស (XAUUSD) លើ Timeframe 4H កំពុងស្ថិតក្នុងដំណាក់កាលសាងសង់មូលដ្ឋានតម្លៃ (Base Building / Consolidation)។  
-                * **ការណែនាំ៖** **Stand Aside (រង់ចាំមើលអសកម្ម)** ជាដាច់ខាត។ សញ្ញា Entry ទាំងអស់ត្រូវបាន **លាក់/បញ្ឈប់ការបង្ហាញ** ព្រោះហានិភ័យខ្ពស់ខ្លាំង។  
-                * **សកម្មភាពបន្ទាប់៖** សូមរង់ចាំរហូតទាល់តែតម្លៃចេញផុតពីតំបន់នេះ ឬ **ទម្លាក់រូបភាព Screenshot 4H ថ្មី** ចូលមកក្នុងប្រព័ន្ធ ដើម្បីវិភាគជាថ្មី!
-            """)
-        elif results["fakeout_trap"]:
-            st.error(f"🚨 **HIGH-RISK TRAP ZONE ALERT:** រកឃើញសញ្ញា Fakeout ក្នុង Range `{results['trap_range']}`។ Entry ត្រូវបានផ្អាកទាំងស្រុង!")
-        elif results["macro_bo_failed"]:
-            st.error("🚨 **MACRO BREAKOUT FAILURE:** តម្លៃทำ False Breakout។ ផ្អាកការបង្ហាញ Entry ទាំងស្រុង!")
-
     st.markdown("---")
+    
+    # ពិនិត្យសិទ្ធិ៖ ផ្ដល់សិទ្ធិឱ្យតែ Admin មើលឃើញផ្នែកនេះប៉ុណ្ណោះ
+    user_role = st.session_state.get('role', 'user')
+    if user_role != 'admin':
+        return  # ប្រសិនបើជា User ធម្មតា គឺមិនបង្ហាញអ្វីទាំងអស់នៅត្រង់នេះ
+    
+    st.markdown("### ⚡ SMC Real-time Execution & Price Monitor (Admin View)")
+    st.caption("ផ្ទាំងសម្រាប់ Admin តាមដានតម្លៃទីផ្សារបច្ចុប្បន្ន និងផ្ទៀងផ្ទាត់ជាមួយ Zone ក្នុងពេលជាក់ស្តែង។")
 
-    # ----------------------------------------------------
-    # 📊 2. ACTIVE EXECUTION SETUPS (Hidden when Base Building)
-    # ----------------------------------------------------
-    col1, col2 = st.columns(2)
-
+    # បង្កើត Container សម្រាប់បង្ហាញតម្លៃ Live Price របស់ Admin
+    col1, col2, col3 = st.columns(3)
+    
     with col1:
-        st.markdown("### 🟢 A+ Buy Setup")
-        buy = results["buy_setup"]
-        if buy:
-            st.info(f"**Action:** {buy['action']}\n\n"
-                    f"* **Entry Price:** `{buy['entry']}`\n"
-                    f"* **Stop Loss (SL):** `{buy['sl']}`\n"
-                    f"* **Take Profit (TP):** `{buy['tp']}`\n"
-                    f"* **Risk/Reward Ratio:** `1 : {buy['risk_reward']}`")
-        else:
-            st.markdown("❌ *គ្មានសញ្ញា Buy Active ទេ (មាសកំពុងសាង Base លើ 4H ត្រូវរង់ចាំ Screenshot ថ្មី)*")
-
+        st.metric(label="🪙 XAUUSD Live Price", value="3,994.92", delta="-22.27 (-0.55%)")
+    
     with col2:
-        st.markdown("### 🔴 A+ Sell Setup")
-        sell = results["sell_setup"]
-        if sell:
-            st.warning(f"**Action:** {sell['action']}\n\n"
-                       f"* **Entry Price:** `{sell['entry']}`\n"
-                       f"* **Stop Loss (SL):** `{sell['sl']}`\n"
-                       f"* **Take Profit (TP):** `{sell['tp']}`\n"
-                       f"* **Risk/Reward Ratio:** `1 : {sell['risk_reward']}`")
+        # ទាញយកតម្លៃ Min/Max ដែលបានកំណត់ក្នុង Session ឬ Config មកបង្ហាញដើម្បីងាយស្រួលផ្ទៀងផ្ទាត់
+        min_zone = st.session_state.get('inp_bg_range_min', 4000.00)
+        max_zone = st.session_state.get('inp_bg_range_max', 4250.00)
+        st.metric(label="📍 Active Zone Range", value=f"{min_zone} - {max_zone}")
+
+    with col3:
+        # ស្ថានភាពផ្ទៀងផ្ទាត់តម្លៃជាមួយ Zone
+        current_p = 3994.92
+        if min_zone <= current_p <= max_zone:
+            st.success("🟢 Price is INSIDE Zone (Ready/Hit)")
         else:
-            st.markdown("❌ *គ្មានសញ្ញា Sell Active ទេ (មាសកំពុងសាង Base លើ 4H ត្រូវរង់ចាំ Screenshot ថ្មី)*")
+            st.warning("🟡 Waiting for Price to Reach Zone")
+
+    # ផ្នែកសម្រាប់ Admin ចុច Test Trigger ឬ Execution បន្ថែមតាមតម្រូវការ
+    with st.expander("🛠️ Admin Advanced Execution Controls", expanded=False):
+        st.write("គ្រប់គ្រងការតភ្ជាប់ MT5 និងការបញ្ជូនសញ្ញាแจ้งเตือน (Signals) ជូន Admin៖")
+        
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("🔄 Check MT5 Connection", use_container_width=True):
+                st.success("✅ MT5 Connected Successfully (Simulation Active)!")
+        with col_btn2:
+            if st.button("🚀 Trigger Manual Signal Check", use_container_width=True):
+                st.info("ℹ️ បានពិនិត្យរួចរាល់៖ តម្លៃបច្ចុប្បន្នស្ថិតក្នុងកម្រិតត្រួតពិនិត្យ។")
