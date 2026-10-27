@@ -4,8 +4,6 @@ import os
 from modules.auth_manager import check_login, logout_button
 from modules.admin_dashboard import render_admin_dashboard
 from modules.user_dashboard import render_user_dashboard
-
-# Imports សម្រាប់ Admin Full Dashboard
 from modules.trading_view import render_trading_view
 from modules.smc_manual import render_smc_manual
 from modules.smc_chart import render_analytical_chart
@@ -13,19 +11,14 @@ from modules.smc_vision import render_smc_vision
 from modules.smc_execution import render_smc_execution
 from modules.news import render_news_ticker
 
-# ==========================================
-# 🚀 STREAMLIT PAGE CONFIG & LAYOUT SETUP
-# ==========================================
 st.set_page_config(
     page_title="Ironclad Capital Partners - SMC",
     page_icon="📈",
     layout="wide"
 )
 
-# 1. ពិនិត្យការ Login
 if check_login():
-    
-    # 2. HEADER LOGO & TITLE SIDE-BY-SIDE (ដាក់ Ironclad Capital Logo ទន្ទឹមគ្នាជាមួយចំណងជើង)
+    # 📌 ដាក់ Logo និងចំណងជើងឱ្យនៅទន្ទឹមគ្នា (Side-by-side)
     header_col1, header_col2 = st.columns([0.1, 0.9], gap="small")
     with header_col1:
         if os.path.exists("assets/logo.png"):
@@ -38,7 +31,6 @@ if check_login():
 
     st.markdown("---")
 
-    # Sidebar Info
     if os.path.exists("assets/logo.png"):
         st.sidebar.image("assets/logo.png", use_container_width=True)
 
@@ -52,7 +44,6 @@ if check_login():
     st.sidebar.markdown("---")
     logout_button()
 
-    # 3. ROUTING តាមសិទ្ធិ (Role-Based Routing)
     user_role = st.session_state.get('role', 'user')
 
     if user_role == 'admin':
@@ -67,7 +58,7 @@ if check_login():
             with col_charts:
                 try:
                     render_trading_view()
-                except Exception as e:
+                except:
                     st.info("TradingView Component Loading...")
                 st.markdown("---")
                 render_analytical_chart()
@@ -80,6 +71,5 @@ if check_login():
             st.markdown("---")
             render_smc_execution()
             render_news_ticker()
-
     else:
         render_user_dashboard()
