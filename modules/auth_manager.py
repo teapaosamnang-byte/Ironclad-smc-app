@@ -9,41 +9,22 @@ def check_login():
         logo_path = "assets/logo.png"
         bullbear_path = "assets/bull&bear.png"
         
-        # 📌 ប្រើប្រាស់ CSS ដើម្បីจัดកណ្តាល និងកំណត់ Style ឱ្យ container រូបភាពនៅជិតគ្នា
-        st.markdown(
-            """
-            <style>
-            .stImage img {
-                border-radius: 8px;
-                object-fit: contain;
-            }
-            /* ຈັດឱ្យ columns ដាក់រូបនៅកៀកគ្នាចំកណ្តាល */
-            div[data-testid="column"] {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-
-        # ຈັດ Columns ចង្អៀតនៅកណ្តាល ដាក់រូបភាពទំហំធ្មេចស្មើគ្នា (Width = 120px)
+        # 📌 ប្រើប្រាស់ Columns ចង្អៀតនៅកណ្តាល និងកំណត់ width ស្មើគ្នាច្បាស់លាស់ (ឧទាហរណ៍: 130px ទាំងសងខាង)
         col_space1, col_img1, col_img2, col_space2 = st.columns([2.3, 1, 1, 2.3], gap="small")
         
         with col_img1:
             if os.path.exists(logo_path):
-                st.image(logo_path, width=120)
+                st.image(logo_path, width=130)
             elif os.path.exists("logo.png"):
-                st.image("logo.png", width=120)
+                st.image("logo.png", width=130)
                 
         with col_img2:
             if os.path.exists(bullbear_path):
-                st.image(bullbear_path, width=120)
+                st.image(bullbear_path, width=130)
             elif os.path.exists("bull&bear.png"):
-                st.image("bull&bear.png", width=120)
+                st.image("bull&bear.png", width=130)
 
-        st.markdown("<h2 style='text-align: center; margin-top: 15px;'>Ironclad Capital - System Login</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; margin-top: 10px;'>Ironclad Capital - System Login</h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: gray;'>Institutional SMC Trading System</p>", unsafe_allow_html=True)
 
         # 🔐 រក្សាលក្ខខណ្ឌ Form Login និង Role Check ដើមទាំងអស់យ៉ាងครบถ้วน
