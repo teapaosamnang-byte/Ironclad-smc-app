@@ -5,11 +5,10 @@ from modules.auth_manager import check_login, logout_button
 from modules.admin_dashboard import render_admin_dashboard
 from modules.user_dashboard import render_user_dashboard
 
-# Imports សម្រាប់ Admin Full Dashboard
+# Imports សម្រាប់ Admin Full Dashboard (ដក smc_vision ចេញ)
 from modules.trading_view import render_trading_view
 from modules.smc_manual import render_smc_manual
 from modules.smc_chart import render_analytical_chart
-from modules.smc_vision import render_smc_vision
 from modules.smc_execution import render_smc_execution
 from modules.news import render_news_ticker
 
@@ -52,7 +51,7 @@ if check_login():
         if admin_page == "🛠️ គ្រប់គ្រងអ្នកប្រើប្រាស់ (User Management)":
             render_admin_dashboard()
         else:
-            # 📌 ផ្ទាំង Full Dashboard: បែងចែកជា ២ Column (ខាងឆ្វេង Chart, ខាងស្តាំ Vision OCR & Manual Input)
+            # 📌 ផ្ទាំង Full Dashboard: បែងចែកជា ២ Column (ខាងឆ្វេង Chart, ខាងស្តាំ SMC Manual Input)
             col_charts, col_manual_input = st.columns([1.3, 0.7], gap="medium")
             
             with col_charts:
@@ -64,9 +63,7 @@ if check_login():
                 render_analytical_chart()
 
             with col_manual_input:
-                # 📌 ហៅ AI OCR Panel និង Manual Input មកបង្ហាញនៅខាងស្តាំវិញ
-                render_smc_vision()
-                st.markdown("---")
+                # 📌 ហៅ SMC Manual Input មកបង្ហាញនៅខាងស្តាំដាច់ខատ (គ្មាន Vision ទៀតទេ)
                 render_smc_manual()
 
             st.markdown("---")
