@@ -1,74 +1,13 @@
-import streamlit as st
+from modules.smc_analysis import get_technical_signals
 
-@st.fragment
 def render_smc_execution():
-    st.markdown("---")
-    user_role = st.session_state.get('role', 'user')
-
-    bg_min = st.session_state.get('inp_bg_1_min', 4000.00)
-    bg_max = st.session_state.get('inp_bg_1_max', 4030.00)
-    current_price = st.session_state.get('live_market_price', 4022.00)
-
-    # លក្ខខណ្ឌ SMC: OB Zone + Liquidity Sweep + 15m/5m Confirmation
-    is_in_ob_zone = bg_min <= current_price <= bg_max
-    is_liquidity_swept_and_confirmed = is_in_ob_zone and (current_price >= (bg_max - 10.00) or current_price <= (bg_min + 10.00))
-
-    mid_price = (bg_min + bg_max) / 2
+    # สมมติទាញយកតម្លៃ Real-time Price បច្ចុប្បន្ន (ឧ. XAUUSD)
+    current_price = 4022.00  # ឬទាញពី API ຕົວពិត
     
-    if current_price >= mid_price:
-        action = "SELL SIGNAL (PREMIUM OB & LIQUIDITY SWEEP)"
-        signal_type = "SELL"
-        entry = current_price
-        sl = bg_max + 10.00
-        tp = bg_min - 20.00
-    else:
-        action = "BUY SIGNAL (DISCOUNT OB & LIQUIDITY SWEEP)"
-        signal_type = "BUY"
-        entry = current_price
-        sl = bg_min - 10.00
-        tp = bg_max + 20.00
-
-    # ==========================================
-    # 👑 ADMIN VIEW
-    # ==========================================
-    if user_role == 'admin':
-        st.markdown("### ⚡ SMC Real-time Execution (Admin Dashboard)")
-        st.caption("ប្រព័ន្ធតាមដានតម្លៃ Real-time, Liquidity Sweep និង 15m/5m Confirmation។")
-
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric(label="🪙 XAUUSD Real-time Price", value=f"{current_price:,.2f}")
-        with col2:
-            st.metric(label="📍 Big Pattern Range", value=f"{bg_min:,.2f} - {bg_max:,.2f}")
-        with col3:
-            if is_liquidity_swept_and_confirmed:
-                st.success("🟢 OB HIT & CONFIRMED")
-            else:
-                st.warning("⚪ WAITING FOR OB & SWEEP")
-
-        with st.expander("🔍 Admin Detailed Analysis", expanded=True):
-            st.write(f"- **Direction**: **{action}**")
-            st.write(f"- **Entry Price**: `{entry:,.2f}`")
-            st.write(f"- **Stop Loss (SL)**: `{sl:,.2f}` | **Take Profit (TP)**: `{tp:,.2f}`")
-
-    # ==========================================
-    # 👤 USER VIEW (បង្ហាញតែសញ្ញា Buy/Sell និង Entry, TP, SL ប៉ុណ្ណោះ)
-    # ==========================================
-    else:
-        st.markdown("### 🚨 SMC Trade Signals")
-        st.caption("សញ្ញាបញ្ជាទិញលក់ជាក់ស្តែងផ្អែកលើប្រព័ន្ធ SMC ។")
-
-        if is_liquidity_swept_and_confirmed:
-            st.success("🟢 **SIGNAL STATUS: LIQUIDITY SWEEP & 15m/5m CONFIRMED**")
-            st.markdown(f"### 🎯 Active Direction: **{action}**")
-            
-            col_u1, col_u2, col_u3 = st.columns(3)
-            with col_u1:
-                st.metric(label="📍 Entry Price", value=f"{entry:,.2f}")
-            with col_u2:
-                st.metric(label="🛡️ Stop Loss (SL)", value=f"{sl:,.2f}")
-            with col_u3:
-                st.metric(label="🎯 Take Profit (TP)", value=f"{tp:,.2f}")
-        else:
-            st.info("⚪ **SIGNAL STATUS: WAITING FOR PRICE TO REACH OB & LIQUIDITY SWEEP**")
-            st.write("តម្លៃបច្ចុប្បន្នមិនទាន់ចូលដល់តំបន់ OB Zone និងមិនទាន់មានការបោស Liquidity + 15m/5m Confirm ទេ។ ប្រព័ន្ធកំពុងរង់ចាំតាមដានយ៉ាងម៉ត់ចត់។")
+    analysis = get_technical_signals(current_price)
+    
+    st.markdown("### ⚡ SMC Real-Time Execution (Admin Dashboard)")
+    st.info(f"Global A+ Zone យកមកប្រើប្រាស់៖ Top = {analysis.get('highest_top', 0):.3f} | Bottom = {analysis.get('lowest_bot', 0):.3f}")
+    
+    st.markdown(f"**Direction:** {analysis.get('signal')}")
+    st.markdown(f"**Entry Price:** {analysis.get('entry'):.3f} | **Stop Loss (SL):** {analysis.get('sl'):.3f} | **Take Profit (TP):** {analysis.get('tp'):.3f}")
