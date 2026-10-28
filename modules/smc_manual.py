@@ -20,7 +20,7 @@ def save_data(data):
 
 def render_smc_manual():
     st.subheader("📊 SMC Manual Input & Pattern Management")
-    st.caption("បញ្ចូលទិន្នន័យ Range និង Liquidity Zones ជាមួយប្រព័ន្ធ Auto-Chain តភ្ជាប់តម្លៃស្វ័យប្រវត្តិ។")
+    st.caption("បញ្ចូលទិន្នន័យ Range និង Liquidity Zones ជាមួយប្រព័ន្ធ Auto-Chain ស្វ័យប្រវត្តិ។")
 
     records = load_data()
 
@@ -31,47 +31,47 @@ def render_smc_manual():
         with col_pat:
             pattern_type = st.selectbox("Pattern Type", ["A", "B", "C"])
         with col_rmin:
-            range_min = st.number_input("Range Min", value=0.000, format="%.3f")
+            range_min = st.number_input("Range Min", value=3985.485, format="%.3f")
         with col_rmax:
-            range_max = st.number_input("Range Max", value=0.000, format="%.3f")
+            range_max = st.number_input("Range Max", value=4030.670, format="%.3f")
 
         st.markdown("---")
-        st.markdown("**🔴 Liquidity Zones Top (Auto-Chaining 3 Zones)**")
-        st.caption("បញ្ចូលតម្លៃព្រំប្រទល់នីមួយៗ ស្របតាមទម្រង់តភ្ជាប់គ្នាជាបន្តបន្ទាប់៖")
+        st.markdown("**🔴 Liquidity Zones Top (តភ្ជាប់ពី Range Max ឡើងលើ)**")
+        st.caption(f"• Top Z1 Min យកតម្លៃ Range Max ស្វ័យប្រវត្តិ (`{range_max:.3f}`)។ សូមបញ្ចូលតែតម្លៃ Max របស់ Zone នីមួយៗ៖")
         
-        t_col1, t_col2, t_col3, t_col4 = st.columns(4)
+        t_col1, t_col2, t_col3 = st.columns(3)
         with t_col1:
-            t_z1_min = st.number_input("Top Z1 Min", value=range_max, format="%.3f") # ចាប់ផ្តើមពី Range Max ស្រាប់
+            t_z1_max = st.number_input("Top Z1 Max", value=4032.533, format="%.3f")
         with t_col2:
-            t_z1_max_z2_min = st.number_input("Top Z1 Max / Z2 Min", value=0.000, format="%.3f")
+            t_z2_max = st.number_input("Top Z2 Max", value=4033.500, format="%.3f")
         with t_col3:
-            t_z2_max_z3_min = st.number_input("Top Z2 Max / Z3 Min", value=0.000, format="%.3f")
-        with t_col4:
-            t_z3_max = st.number_input("Top Z3 Max", value=0.000, format="%.3f")
+            t_z3_max = st.number_input("Top Z3 Max", value=4034.085, format="%.3f")
 
-        st.markdown("**🔵 Liquidity Zones Bottom (Auto-Chaining 3 Zones)**")
-        b_col1, b_col2, b_col3, b_col4 = st.columns(4)
+        st.markdown("**🔵 Liquidity Zones Bottom (តភ្ជាប់ពី Range Min ចុះក្រោម)**")
+        st.caption(f"• Bot Z1 Max យកតម្លៃ Range Min ស្វ័យប្រវត្តិ (`{range_min:.3f}`)។ សូមបញ្ចូលតែតម្លៃ Min របស់ Zone នីមួយៗ៖")
+        
+        b_col1, b_col2, b_col3 = st.columns(3)
         with b_col1:
-            b_z1_min = st.number_input("Bot Z1 Min", value=range_min, format="%.3f") # ចាប់ផ្តើមពី Range Min ស្រាប់
+            b_z1_min = st.number_input("Bot Z1 Min", value=3980.000, format="%.3f")
         with b_col2:
-            b_z1_max_z2_min = st.number_input("Bot Z1 Max / Z2 Min", value=0.000, format="%.3f")
+            b_z2_min = st.number_input("Bot Z2 Min", value=3975.000, format="%.3f")
         with b_col3:
-            b_z2_max_z3_min = st.number_input("Bot Z2 Max / Z3 Min", value=0.000, format="%.3f")
-        with b_col4:
-            b_z3_max = st.number_input("Bot Z3 Max", value=0.000, format="%.3f")
+            b_z3_min = st.number_input("Bot Z3 Min", value=3970.000, format="%.3f")
 
         submitted = st.form_submit_button("➕ រក្សាទុកទិន្នន័យ (Add Record)")
         if submitted:
-            # រៀបចំโครงสร้าง Zone ឱ្យតភ្ជាប់គ្នាដោយស្វ័យប្រវត្តិ (Chaining Logic)
+            # Auto-Chaining Logic សម្រាប់ Top Zones
             top_zones = [
-                {"min": t_z1_min, "max": t_z1_max_z2_min},
-                {"min": t_z1_max_z2_min, "max": t_z2_max_z3_min},
-                {"min": t_z2_max_z3_min, "max": t_z3_max}
+                {"min": range_max, "max": t_z1_max},
+                {"min": t_z1_max, "max": t_z2_max},
+                {"min": t_z2_max, "max": t_z3_max}
             ]
+            
+            # Auto-Chaining Logic សម្រាប់ Bottom Zones (ពី Range Min ចុះក្រោម)
             bottom_zones = [
-                {"min": b_z1_min, "max": b_z1_max_z2_min},
-                {"min": b_z1_max_z2_min, "max": b_z2_max_z3_min},
-                {"min": b_z2_max_z3_min, "max": b_z3_max}
+                {"min": b_z1_min, "max": range_min},
+                {"min": b_z2_min, "max": b_z1_min},
+                {"min": b_z3_min, "max": b_z2_min}
             ]
 
             new_record = {
@@ -117,7 +117,6 @@ def render_smc_manual():
         df = pd.DataFrame(table_data)
         st.table(df.drop(columns=["ID"]))
 
-        # 🌟 ការគណនា A+ Pattern ស្វ័យប្រវត្តិ (Auto-Merge A+)
         if all_top_maxs and all_bot_mins:
             highest_top = max(all_top_maxs)
             valid_bots = [b for b in all_bot_mins if b < 999999.0]
